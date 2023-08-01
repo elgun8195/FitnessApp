@@ -1,0 +1,148 @@
+﻿@model Product
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Areas/Manage/Views/Shared/_Layout.cshtml";
+    List<Category> categories = (List<Category>)ViewBag.Categories;
+    List<Discount> campaigns = (List<Discount>)ViewBag.Discounts;
+
+}
+
+<div class="main-panel">
+    <div class="content-wrapper">
+        <div class="row">
+            <div class="col-md-6 grid-margin stretch-card">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+
+                            <div class="form-group">
+                                <label asp-for="Photo">Photo</label>
+                                <input asp-for="Photo" class="form-control" placeholder="Photo">
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Name">Name</label>
+                                <input asp-for="Name" class="form-control" placeholder="Name">
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Description">Description</label>
+                                <input asp-for="Description" class="form-control" placeholder="Description">
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Price">Price</label>
+                                <input asp-for="Price" class="form-control" placeholder="Price">
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Count">Count</label>
+                                <input asp-for="Count" class="form-control" placeholder="Count">
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="@Model.CategoryIds" class="form-label">Categories</label>
+                                <select asp-for="@Model.CategoryIds" class="form-select">
+                                    @foreach (var category in ViewBag.Categories)
+                                    {
+                                        if (Model.ProductCategories.FirstOrDefault(fc => fc.CategoryId == category.Id) != null)
+                                        {
+                                            <option value="@category.Id" selected>@category.Name</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@category.Id">@category.Name</option>
+
+                                        }
+                                    }
+                                </select>
+                                <span class="mt-2 text text-danger" asp-validation-for="@Model.CategoryIds"></span>
+                            </div>
+                            <input type="hidden" id="pid" value="@Model.Id" />
+                            <div class="form-group">
+                                <label asp-for="@Model.DiscountId" class="form-label">Discount</label>
+                                <select asp-for="@Model.DiscountId" class="form-select" asp-items="@(new SelectList(campaigns,"Id","DiscountPercent"))">
+                                    <option value="0">Select campaign</option>
+                                </select>
+                                <span class="mt-2 text text-danger" asp-validation-for="@Model.DiscountId"></span>
+                            </div>
+
+
+                            <button type="submit" class="btn btn-primary mr-2">Submit</button>
+                            <a asp-area="admin" asp-controller="slider" asp-action="index" class="btn btn-light">Cancel</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card">
+                    <div class="proImgs d-flex flex-wrap">
+
+                        @foreach (ProductImage item in Model.ProductImages)
+                        {
+                            <div class="proImg d-flex flex-column m-3">
+
+                                <img style="width:100px;height:100px;object-fit:cover" src="~/img/shop/@item.ImageUrl" />
+                                @if (item.IsMain)
+                                {                                    
+                                <p class="bg-primary">Esas foto</p>
+                                }
+                                @if (!item.IsMain)
+                                {
+                                 
+                                    <a class="btn btn-danger changem text-white" pid="@Model.Id" id="@item.Id">Esas foto et</a>
+                                }
+                                <a class="btn btn-danger text-white delImgs">Delete</a>
+                                <input type="hidden" id="iid" value="@item.Id">
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<a asp-controller="product" asp-action="sil">sil</a>
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+
+        $(document).ready(function () {
+            var ele = document.getElementsByClassName('changem');
+            for (i = 0; i <= ele.length; i++) {
+                document.getElementsByClassName('changem').item(i).onclick = function (e) {
+                    e.preventDefault();
+                    var pidValue = this.getAttribute("pid");
+                    $.ajax({
+                        method: "post",
+                        url: "/manage/product/change?id=" + this.id + "&pid=" + pidValue,
+                        success: function (res) {
+                            console.log("it works");
+                        },
+                        error: function (error) {
+                            console.log("An error occurred: " + error);
+                        }
+                    })
+                }
+            }
+
+        });
+
+
+    </script>
+    <script>
+        $(document).on("click", ".delImgs", function () {
+            let myBtn = $(this)
+
+            $.ajax({
+                url: "/Manage/Product/DeleteImage/",
+                type: "get",
+                data: {
+                    "id": myBtn.next().val(), "pid": $("#pid").val()
+                },
+                success: function (res) {
+                    myBtn.parent().remove()
+                    if ($(".proImgs").children().length == 1) {
+                        $(".delImgs").remove()
+                    }
+                }
+            });
+        });
+    </script>
+}
